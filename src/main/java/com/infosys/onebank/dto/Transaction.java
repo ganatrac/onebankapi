@@ -8,16 +8,29 @@ public class Transaction {
     private String fromAccount;
     private double amount;
     private String toAccount;
+    private String description;
 
-    public Transaction(double amount, String toAccount) {
+    public Transaction(double amount, String toAccount, String description) {
         this.amount = amount;
         this.toAccount = toAccount;
+        this.description = description;
     }
 
-    public Transaction(String fromAccount, double amount, String toAccount) {
+    public Transaction(String fromAccount, double amount, String toAccount, String description) {
         this.fromAccount = fromAccount;
         this.amount = amount;
         this.toAccount = toAccount;
+        this.description = description;
+    }
+
+    public Transaction(){}
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getFromAccount() {

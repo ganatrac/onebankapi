@@ -82,10 +82,10 @@ public class TransactionServiceImpl implements TransactionService {
 
     public String createTransaction(com.infosys.onebank.dto.Transaction transaction) {
         String fromAccount = StringUtils.isEmpty(transaction.getFromAccount()) ? accountService.getDefaultAccount() : transaction.getFromAccount();
-
-        String counterPartyId = getCounterPartyFromAccountNo(fromAccount, transaction.getToAccount());
+        String toAccount = PropertyLoader.getInstance().getPropertyValue(transaction.getToAccount());
+        String counterPartyId = getCounterPartyFromAccountNo(fromAccount, toAccount);
         logger.info("Counter party id " + counterPartyId);
-        return postTransaction(fromAccount, counterPartyId, transaction.getAmount());
+        return postTransaction(fromAccount, counterPartyId, transaction.getAmount(), transaction.getDescription());
     }
 
     private String getCounterPartyFromAccountNo(String fromAccount, String counterPartyAccount) {
@@ -110,12 +110,12 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
 
-    private String postTransaction(String fromAccount, String counterPartyId, double amount) {
+    private String postTransaction(String fromAccount, String counterPartyId, double amount, String description) {
 
         String postURI = BASE_URI + "obp/v2.1.0/banks/" + BANK_ID + "/accounts/" + fromAccount + "/owner/transaction-request-types/COUNTERPARTY/transaction-requests";
         logger.info("create transaction request " + postURI);
         String currency = PropertyLoader.getInstance().getPropertyValue("currency");
-        MyTransaction t = new MyTransaction(new To(counterPartyId), new Value(currency, amount), "transaction by Alexa", "SHARED");
+        MyTransaction t = new MyTransaction(new To(counterPartyId), new Value(currency, amount), description, "SHARED");
         logger.info("post json " + JsonParserUtils.createJson(t));
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(postURI, new HttpEntity<String>(JsonParserUtils.createJson(t), getRequestHeaders()), String.class);
         JSONObject responseJson = JsonParserUtils.parse(responseEntity.getBody());
