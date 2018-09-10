@@ -18,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.infosys.onebank.OneBankConstants.*;
 
@@ -59,6 +60,16 @@ public class TransactionServiceImpl implements TransactionService {
             logger.error("Error list transactions", e);
         }
         return new ArrayList<>();
+    }
+
+    public List<Transaction> listTransactions(String forAccount, int count) {
+        List<Transaction> transactions = getMyTransactions(forAccount);
+
+        if(transactions.size() > count) {
+            return transactions.stream().sorted(Transaction::compareTo).limit(count).collect(Collectors.toList());
+        } else {
+            return transactions;
+        }
     }
 
     public List<Transaction> listTransactions(String forAccount) {

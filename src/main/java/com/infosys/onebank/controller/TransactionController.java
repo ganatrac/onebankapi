@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,9 +26,16 @@ public class TransactionController {
     @Autowired
     private AccountService accountService;
 
-    @GetMapping(path = "/transaction", produces = "application/json")
+    @GetMapping(path = "/transactions", produces = "application/json")
     public ResponseEntity transaction() {
-        List<Transaction> transactionList = transactionService.listTransactions(accountService.getDefaultAccount());
+        List<Transaction> transactionList = transactionService.listTransactions(accountService.getDefaultAccount(), 3);
         return new ResponseEntity(transactionList, HttpStatus.OK);
     }
+
+    @GetMapping(path = "/transactions/{id}/account", produces = "application/json")
+    public ResponseEntity transaction(@PathVariable("id") String id) {
+        List<Transaction> transactionList = transactionService.listTransactions(id, 3);
+        return new ResponseEntity(transactionList, HttpStatus.OK);
+    }
+
 }

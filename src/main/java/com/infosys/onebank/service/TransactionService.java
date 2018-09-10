@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface TransactionService {
     List<Transaction> listTransactions(String forAccount);
+    List<Transaction> listTransactions(String forAccount, int count);
 }
 
