@@ -1,7 +1,10 @@
 package com.infosys.onebank.service;
 
 
-import com.infosys.onebank.utils.*;
+import com.infosys.onebank.utils.HashUtils;
+import com.infosys.onebank.utils.JsonParserUtils;
+import com.infosys.onebank.utils.PropertyLoader;
+import com.infosys.onebank.utils.RestHeaderUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -38,9 +41,7 @@ public class LoginServiceImpl implements LoginService {
                 HttpMethod.POST,
                 new HttpEntity<String>(RestHeaderUtils.createLoginHeaders(username, password, consumerKey)),
                 String.class);
-        if(response.getStatusCode().isError()) {
-            throw APIExceptionUtils.createInvalidAPIException(response);
-        }
+
         JSONObject token = JsonParserUtils.parse(response.getBody());
         return token.get("token").toString();
 

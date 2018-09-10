@@ -13,20 +13,20 @@ public class BalanceServiceImpl implements BalanceService {
     @Autowired
     private AccountService accountService;
 
-    public Balance getMyBalance(String forAccount) {
+    public Balance getBalance(String forAccount) {
         return accountService.getAccountBalance(forAccount);
     }
 
     public Balance getBalanceDefaultAccount() {
-        return getMyBalance(accountService.getDefaultAccount());
+        return getBalance(accountService.getDefaultAccount());
     }
 
-    public Balance getMyBalanceAllAccounts() {
+    public Balance getBalanceAllAccounts() {
         List<String> myAccounts = accountService.listMyAccounts();
         double amount = 0;
         String currency = "";
         for(String account : myAccounts) {
-            Balance balance = getMyBalance(account);
+            Balance balance = getBalance(account);
             amount = amount + balance.getAmount();
             currency = balance.getCurrency();
         }
