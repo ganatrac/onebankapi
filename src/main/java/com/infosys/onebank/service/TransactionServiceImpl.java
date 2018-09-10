@@ -3,6 +3,7 @@ package com.infosys.onebank.service;
 
 import com.infosys.onebank.resource.Transaction;
 import com.infosys.onebank.utils.JsonParserUtils;
+import com.infosys.onebank.utils.PropertyLoader;
 import com.infosys.onebank.utils.RestHeaderUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -30,6 +32,8 @@ public class TransactionServiceImpl implements TransactionService {
     private RestTemplate restTemplate;
     @Autowired
     private LoginService loginService;
+    @Autowired
+    private AccountService accountService;
 
 
     private HttpHeaders getRequestHeaders() {
@@ -76,8 +80,113 @@ public class TransactionServiceImpl implements TransactionService {
         return getMyTransactions(forAccount);
     }
 
+    public String createTransaction(com.infosys.onebank.dto.Transaction transaction) {
+        String fromAccount = StringUtils.isEmpty(transaction.getFromAccount()) ? accountService.getDefaultAccount() : transaction.getFromAccount();
+
+        String counterPartyId = getCounterPartyFromAccountNo(fromAccount, transaction.getToAccount());
+        logger.info("Counter party id " + counterPartyId);
+        return postTransaction(fromAccount, counterPartyId, transaction.getAmount());
+    }
+
+    private String getCounterPartyFromAccountNo(String fromAccount, String counterPartyAccount) {
+        try {
+            String counterPartyURI = BASE_URI + "obp/v2.2.0/banks/" + BANK_ID + "/accounts/" + fromAccount + "/owner/counterparties";
+            logger.info("Get cp id request " + counterPartyURI);
+            ResponseEntity<String> responseEntity = restTemplate.exchange(counterPartyURI, HttpMethod.GET, new HttpEntity<String>(getRequestHeaders()), String.class);
+            JSONObject responseJson = JsonParserUtils.parse(responseEntity.getBody());
+            JSONArray counterparties = (JSONArray) responseJson.get("counterparties");
+
+            for (int i = 0; i < counterparties.size(); i++) {
+                JSONObject j = (JSONObject) counterparties.get(i);
+                if (j.get("other_account_routing_address").equals(counterPartyAccount)) {
+                    return (String) j.get("counterparty_id");
+                }
+            }
+            throw new RuntimeException("Counter party not found");
+        } catch (Exception e) {
+            logger.error("Error get counterparty id call", e);
+        }
+        return "";
+    }
+
+
+    private String postTransaction(String fromAccount, String counterPartyId, double amount) {
+
+        String postURI = BASE_URI + "obp/v2.1.0/banks/" + BANK_ID + "/accounts/" + fromAccount + "/owner/transaction-request-types/COUNTERPARTY/transaction-requests";
+        logger.info("create transaction request " + postURI);
+        String currency = PropertyLoader.getInstance().getPropertyValue("currency");
+        MyTransaction t = new MyTransaction(new To(counterPartyId), new Value(currency, amount), "transaction by Alexa", "SHARED");
+        logger.info("post json " + JsonParserUtils.createJson(t));
+        ResponseEntity<String> responseEntity = restTemplate.postForEntity(postURI, new HttpEntity<String>(JsonParserUtils.createJson(t), getRequestHeaders()), String.class);
+        JSONObject responseJson = JsonParserUtils.parse(responseEntity.getBody());
+        return (String) responseJson.get("status");
+
+    }
 
 }
+
+class MyTransaction {
+
+    final To to;
+    final Value value;
+    final String description;
+    final String charge_policy;
+
+    public MyTransaction(To to, Value value, String description, String charge_policy) {
+        this.to = to;
+        this.value = value;
+        this.description = description;
+        this.charge_policy = charge_policy;
+    }
+
+    public To getTo() {
+        return to;
+    }
+
+    public Value getValue() {
+        return value;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getCharge_policy() {
+        return charge_policy;
+    }
+}
+
+class To {
+    final String counterparty_id;
+    To(String counterparty_id) {
+        this.counterparty_id = counterparty_id;
+    }
+
+    public String getCounterparty_id() {
+        return counterparty_id;
+    }
+
+
+}
+
+class Value {
+    final String currency;
+    final double amount;
+
+    public Value(String currency, double amount) {
+        this.currency = currency;
+        this.amount = amount;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+}
+
 
 
 

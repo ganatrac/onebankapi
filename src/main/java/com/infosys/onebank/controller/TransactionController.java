@@ -6,10 +6,7 @@ import com.infosys.onebank.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -36,6 +33,12 @@ public class TransactionController {
     public ResponseEntity transaction(@PathVariable("id") String id) {
         List<Transaction> transactionList = transactionService.listTransactions(id, 3);
         return new ResponseEntity(transactionList, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/transactions", consumes = "application/json")
+    public ResponseEntity create(@RequestBody com.infosys.onebank.dto.Transaction transaction) {
+        String status = transactionService.createTransaction(transaction);
+        return new ResponseEntity(status, HttpStatus.OK);
     }
 
 }
