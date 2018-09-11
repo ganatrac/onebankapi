@@ -5,10 +5,13 @@ package com.infosys.onebank.dto;
  */
 public class Transaction {
 
+    private String id;
     private String fromAccount;
     private double amount;
     private String toAccount;
     private String description;
+    private String status;
+
 
     public Transaction(double amount, String toAccount, String description) {
         this.amount = amount;
@@ -22,6 +25,23 @@ public class Transaction {
         this.toAccount = toAccount;
         this.description = description;
     }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
 
     public Transaction(){}
 

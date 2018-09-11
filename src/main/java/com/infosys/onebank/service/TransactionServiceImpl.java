@@ -41,29 +41,26 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private List<Transaction> getMyTransactions(String forAccount) {
-        try {
-            String transactionURI = BASE_URI + "/obp/v3.0.0/my/banks/" + BANK_ID + "/accounts/" + forAccount + "/transactions";
-            ResponseEntity<String> responseEntity = restTemplate.exchange(transactionURI, HttpMethod.GET, new HttpEntity<String>(getRequestHeaders()), String.class);
-            JSONObject responseJson = JsonParserUtils.parse(responseEntity.getBody());
-            JSONArray transactionArray = (JSONArray) responseJson.get("transactions");
-            List<Transaction> myTransactions = new ArrayList<Transaction>();
-            for (int i = 0; i < transactionArray.size(); i++) {
-                JSONObject transactionJson = (JSONObject) transactionArray.get(i);
-                myTransactions.add(new Transaction(
-                        transactionJson.get("id").toString(),
-                        ((JSONObject) transactionJson.get("this_account")).get("id").toString(),
-                        ((JSONObject) ((JSONObject) transactionJson.get("other_account")).get("holder")).get("name").toString(),
-                        Double.parseDouble(((JSONObject) ((JSONObject) transactionJson.get("details")).get("value")).get("amount").toString()),
-                        ((JSONObject) ((JSONObject) transactionJson.get("details")).get("value")).get("currency").toString(),
-                        ((JSONObject) transactionJson.get("details")).get("completed").toString(),
-                        Double.parseDouble(((JSONObject) ((JSONObject) transactionJson.get("details")).get("new_balance")).get("amount").toString())
-                ));
-            }
-            return myTransactions;
-        } catch (Exception e) {
-            logger.error("Error list transactions", e);
+
+        String transactionURI = BASE_URI + "/obp/v3.0.0/my/banks/" + BANK_ID + "/accounts/" + forAccount + "/transactions";
+        ResponseEntity<String> responseEntity = restTemplate.exchange(transactionURI, HttpMethod.GET, new HttpEntity<String>(getRequestHeaders()), String.class);
+        JSONObject responseJson = JsonParserUtils.parse(responseEntity.getBody());
+        JSONArray transactionArray = (JSONArray) responseJson.get("transactions");
+        List<Transaction> myTransactions = new ArrayList<Transaction>();
+        for (int i = 0; i < transactionArray.size(); i++) {
+            JSONObject transactionJson = (JSONObject) transactionArray.get(i);
+            myTransactions.add(new Transaction(
+                    transactionJson.get("id").toString(),
+                    ((JSONObject) transactionJson.get("this_account")).get("id").toString(),
+                    ((JSONObject) ((JSONObject) transactionJson.get("other_account")).get("holder")).get("name").toString(),
+                    Double.parseDouble(((JSONObject) ((JSONObject) transactionJson.get("details")).get("value")).get("amount").toString()),
+                    ((JSONObject) ((JSONObject) transactionJson.get("details")).get("value")).get("currency").toString(),
+                    ((JSONObject) transactionJson.get("details")).get("completed").toString(),
+                    Double.parseDouble(((JSONObject) ((JSONObject) transactionJson.get("details")).get("new_balance")).get("amount").toString())
+            ));
         }
-        return new ArrayList<>();
+        return myTransactions;
+
     }
 
     public List<Transaction> listTransactions(String forAccount, int count) {
@@ -80,7 +77,7 @@ public class TransactionServiceImpl implements TransactionService {
         return getMyTransactions(forAccount);
     }
 
-    public String createTransaction(com.infosys.onebank.dto.Transaction transaction) {
+    public com.infosys.onebank.dto.Transaction createTransaction(com.infosys.onebank.dto.Transaction transaction) {
         String fromAccount = StringUtils.isEmpty(transaction.getFromAccount()) ? accountService.getDefaultAccount() : transaction.getFromAccount();
         String toAccount = PropertyLoader.getInstance().getPropertyValue(transaction.getToAccount());
         String counterPartyId = getCounterPartyFromAccountNo(fromAccount, toAccount);
@@ -89,28 +86,24 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private String getCounterPartyFromAccountNo(String fromAccount, String counterPartyAccount) {
-        try {
-            String counterPartyURI = BASE_URI + "obp/v2.2.0/banks/" + BANK_ID + "/accounts/" + fromAccount + "/owner/counterparties";
-            logger.info("Get cp id request " + counterPartyURI);
-            ResponseEntity<String> responseEntity = restTemplate.exchange(counterPartyURI, HttpMethod.GET, new HttpEntity<String>(getRequestHeaders()), String.class);
-            JSONObject responseJson = JsonParserUtils.parse(responseEntity.getBody());
-            JSONArray counterparties = (JSONArray) responseJson.get("counterparties");
+        String cp = "";
+        String counterPartyURI = BASE_URI + "obp/v2.2.0/banks/" + BANK_ID + "/accounts/" + fromAccount + "/owner/counterparties";
+        logger.info("Get cp id request " + counterPartyURI);
+        ResponseEntity<String> responseEntity = restTemplate.exchange(counterPartyURI, HttpMethod.GET, new HttpEntity<String>(getRequestHeaders()), String.class);
+        JSONObject responseJson = JsonParserUtils.parse(responseEntity.getBody());
+        JSONArray counterparties = (JSONArray) responseJson.get("counterparties");
 
-            for (int i = 0; i < counterparties.size(); i++) {
-                JSONObject j = (JSONObject) counterparties.get(i);
-                if (j.get("other_account_routing_address").equals(counterPartyAccount)) {
-                    return (String) j.get("counterparty_id");
-                }
+        for (int i = 0; i < counterparties.size(); i++) {
+            JSONObject j = (JSONObject) counterparties.get(i);
+            if (j.get("other_account_routing_address").equals(counterPartyAccount)) {
+                cp = (String) j.get("counterparty_id");
             }
-            throw new RuntimeException("Counter party not found");
-        } catch (Exception e) {
-            logger.error("Error get counterparty id call", e);
         }
-        return "";
+        return cp;
     }
 
 
-    private String postTransaction(String fromAccount, String counterPartyId, double amount, String description) {
+    private com.infosys.onebank.dto.Transaction postTransaction(String fromAccount, String counterPartyId, double amount, String description) {
 
         String postURI = BASE_URI + "obp/v2.1.0/banks/" + BANK_ID + "/accounts/" + fromAccount + "/owner/transaction-request-types/COUNTERPARTY/transaction-requests";
         logger.info("create transaction request " + postURI);
@@ -119,7 +112,10 @@ public class TransactionServiceImpl implements TransactionService {
         logger.info("post json " + JsonParserUtils.createJson(t));
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(postURI, new HttpEntity<String>(JsonParserUtils.createJson(t), getRequestHeaders()), String.class);
         JSONObject responseJson = JsonParserUtils.parse(responseEntity.getBody());
-        return (String) responseJson.get("status");
+        com.infosys.onebank.dto.Transaction transaction = new com.infosys.onebank.dto.Transaction(fromAccount, amount, "", description);
+        transaction.setId((String) responseJson.get("id"));
+        transaction.setStatus((String) responseJson.get("status"));
+        return transaction;
 
     }
 

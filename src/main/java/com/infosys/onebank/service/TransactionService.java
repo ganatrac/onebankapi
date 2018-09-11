@@ -8,6 +8,6 @@ import java.util.List;
 public interface TransactionService {
     List<Transaction> listTransactions(String forAccount);
     List<Transaction> listTransactions(String forAccount, int count);
-    String createTransaction(com.infosys.onebank.dto.Transaction transaction);
+    com.infosys.onebank.dto.Transaction createTransaction(com.infosys.onebank.dto.Transaction transaction);
 }
 

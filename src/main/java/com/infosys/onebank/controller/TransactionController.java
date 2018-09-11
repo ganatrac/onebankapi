@@ -35,10 +35,10 @@ public class TransactionController {
         return new ResponseEntity(transactionList, HttpStatus.OK);
     }
 
-    @PostMapping(path = "/transactions", consumes = "application/json")
+    @PostMapping(path = "/transactions", consumes = "application/json", produces = "application/json")
     public ResponseEntity create(@RequestBody com.infosys.onebank.dto.Transaction transaction) {
-        String status = transactionService.createTransaction(transaction);
-        return new ResponseEntity(status, HttpStatus.OK);
+        transaction = transactionService.createTransaction(transaction);
+        return new ResponseEntity(transaction, HttpStatus.CREATED);
     }
 
 }
