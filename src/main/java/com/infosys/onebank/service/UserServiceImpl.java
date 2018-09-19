@@ -25,7 +25,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserDTO postUser(String user) {
-        String finalURI = BASE_URI + "obp/v2.0.0/users";
+        String finalURI = BASE_URI + "obp/v3.1.0/users";
         HttpEntity<String> request = new HttpEntity<String>(user, createHeaders());
 
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(finalURI, request, String.class);
@@ -35,9 +35,7 @@ public class UserServiceImpl implements UserService {
                 (String) object.get("email"),
                 (String) object.get("username")
         );
-
-
-
+        
     }
 
     private HttpHeaders createHeaders(){

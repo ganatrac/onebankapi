@@ -5,11 +5,13 @@ package com.infosys.onebank.resource;
  */
 public class User {
 
-    private final String username;
-    private final String password;
-    private final String email;
-    private final String first_name;
-    private final String last_name;
+    private String username;
+    private String password;
+    private String email;
+    private String first_name;
+    private String last_name;
+
+    public User(){}
 
     public User(String username, String password, String email, String fname, String lname) {
         this.username = username;
