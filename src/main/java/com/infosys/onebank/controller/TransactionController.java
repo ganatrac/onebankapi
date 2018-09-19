@@ -1,5 +1,6 @@
 package com.infosys.onebank.controller;
 
+import com.infosys.onebank.dto.TransactionDTO;
 import com.infosys.onebank.resource.Transaction;
 import com.infosys.onebank.service.AccountService;
 import com.infosys.onebank.service.TransactionService;
@@ -35,10 +36,10 @@ public class TransactionController {
         return new ResponseEntity(transactionList, HttpStatus.OK);
     }
 
-    @PostMapping(path = "/transactions", consumes = "application/json", produces = "application/json")
-    public ResponseEntity create(@RequestBody com.infosys.onebank.dto.Transaction transaction) {
-        transaction = transactionService.createTransaction(transaction);
-        return new ResponseEntity(transaction, HttpStatus.CREATED);
+    @PostMapping(path = "/transactions", consumes = "application/json")
+    public ResponseEntity create(@RequestBody TransactionDTO transactionDTO) {
+        String status = transactionService.createTransaction(transactionDTO);
+        return new ResponseEntity(status, HttpStatus.OK);
     }
 
 }

@@ -3,54 +3,21 @@ package com.infosys.onebank.dto;
 /**
  * Created by chirag.ganatra on 9/10/2018.
  */
-public class Transaction {
+public class TransactionDTO {
 
-    private String id;
     private String fromAccount;
     private double amount;
     private String toAccount;
-    private String description;
-    private String status;
 
-
-    public Transaction(double amount, String toAccount, String description) {
+    public TransactionDTO(double amount, String toAccount) {
         this.amount = amount;
         this.toAccount = toAccount;
-        this.description = description;
     }
 
-    public Transaction(String fromAccount, double amount, String toAccount, String description) {
+    public TransactionDTO(String fromAccount, double amount, String toAccount) {
         this.fromAccount = fromAccount;
         this.amount = amount;
         this.toAccount = toAccount;
-        this.description = description;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-
-    public Transaction(){}
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public String getFromAccount() {
